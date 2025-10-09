@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عداد الأذكار التفاعلي</title>
+
+<!-- === SEO Enhancements Start === -->
+    <meta name="description" content="تطبيق عداد أذكار وتسبيح تفاعلي ومجاني. يساعدك على المحافظة على أوراد أذكار الصباح والمساء بدون تشتيت، مع وضع ليلي مريح وتصميم أنيق.">
+    <meta name="keywords" content="أذكار الصباح, أذكار المساء, عداد تسبيح, عداد أذكار, ذكر, تسبيح, إسلامي, تطبيق مجاني, Adhikr, azkar, tasbeeh counter">
+    <meta name="author" content="Your Name or Project Name">
+    <link rel="canonical" href="https://smasemt8791.github.io/Athkar_counter/"> 
+    <!-- === SEO Enhancements End === -->
+
+    <!-- === PWA Manifest === -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4299e1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="عداد الأذكار">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Geometric Pattern SVG  */
+        @keyframes patternFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.4; }
+            50% { transform: translate(10px, -10px) rotate(5deg); opacity: 0.6; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes counterPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.6); }
+        }
+
+        /* === Theme Variables === */
+        :root {
+            --bg-page: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-card: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #718096;
+            --primary-color: #4299e1;
+            --primary-hover: #3182ce;
+            --accent-color: #d4af37;
+            --border-color: rgba(226, 232, 240, 0.8);
+            --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            --shadow-hover: 0 30px 60px -15px rgba(0, 0, 0, 0.25);
+            --pattern-color: rgba(74, 144, 226, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-page: linear-gradient(135deg, #1a1f3a 0%, #0f1419 100%);
+            --bg-card: #1e2740;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --primary-color: #5fa3d0;
+            --primary-hover: #4a90e2;
+            --accent-color: #d4af37;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --shadow-hover: 0 30px 60px -15px rgba(0, 0, 0, 0.7);
+            --pattern-color: rgba(212, 175, 55, 0.05);
+        }
+
+        body {
+            font-family: 'Noto Sans Arabic', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            user-select: none;
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        /* === Pattern Background === */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, var(--pattern-color) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, var(--pattern-color) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, transparent, transparent 35px, var(--pattern-color) 35px, var(--pattern-color) 70px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+            animation: patternFloat 20s ease-in-out infinite;
+        }
+
+        /* === Layout === */
+        #app-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @media (min-width: 1024px) {
+            #app-layout {
+                grid-template-columns: 300px 1fr;
+            }
+        }
+        
+        /* === Theme Toggle Button === */
+        #theme-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 70;
+            width: 48px;
+            height: 48px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s ease;
+        }
+
+        #theme-toggle:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: var(--shadow-hover);
+        }
+
+        #theme-toggle svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-color);
+            transition: transform 0.3s ease;
+        }
+
+        /* === Sidebar Menu === */
+        #sidebar-menu {
+            background: var(--bg-card);
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 0;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 280px;
+            z-index: 50;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .menu-open #sidebar-menu {
+            transform: translateX(0);
+        }
+
+        @media (min-width: 1024px) {
+            #sidebar-menu {
+                position: static;
+                transform: translateX(0);
+                width: auto;
+            }
+        }
+
+        .menu-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 0 1rem 1rem;
+            border-bottom: 2px solid var(--accent-color);
+            margin-bottom: 0.5rem;
+            color: var(--accent-color);
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .menu-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            text-align: right;
+            color: var(--text-primary);
+        }
+
+        .menu-item:hover {
+            background: linear-gradient(90deg, transparent, var(--pattern-color));
+            transform: translateX(-5px);
+            border-right: 3px solid var(--accent-color);
+        }
+        
+        .menu-item.active {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            color: white;
+            font-weight: 700;
+            border-right: 4px solid var(--accent-color);
+        }
+        
+        /* === Main Content === */
+        #main-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            flex-grow: 1;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        #mode-selector {
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            border-radius: 9999px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            padding: 0.5rem;
+            border: 2px solid var(--border-color);
+            animation: fadeInScale 0.5s ease-out;
+            transition: all 0.4s ease;
+        }
+
+        .mode-button {
+            padding: 0.75rem 1.5rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            transform: translate(-50%, -50%);
+            transition: width 0.4s ease, height 0.4s ease;
+        }
+
+        .mode-button.active::before {
+            width: 200%;
+            height: 200%;
+        }
+
+        .mode-button.active {
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .mode-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* === Flashcard === */
+        #flashcard-container {
+            width: 100%;
+            max-width: 650px;
+            height: 75vh;
+            max-height: 700px;
+            animation: fadeInScale 0.6s ease-out 0.2s both;
+        }
+
+        #azkar-card {
+            background: var(--bg-card);
+            border-radius: 2rem;
+            box-shadow: var(--shadow-card);
+            padding: 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        /* Pattern Overlay on Card */
+        #azkar-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle, var(--pattern-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.3;
+            pointer-events: none;
+            animation: patternFloat 30s linear infinite;
+        }
+
+        #azkar-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--accent-color);
+        }
+
+        #counter-display {
+            font-size: 6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        #azkar-text {
+            font-size: 1.5rem;
+            font-weight: 400;
+            line-height: 2.2;
+            overflow-y: auto;
+            max-height: 50%;
+            padding: 0 1rem;
+            text-align: justify;
+            text-align-last: center;
+            direction: rtl;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) transparent;
+            position: relative;
+            z-index: 1;
+            color: var(--text-primary);
+            transition: color 0.4s ease;
+        }
+
+        #azkar-text::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #azkar-text::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 10px;
+        }
+        
+        #azkar-source {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-top: 2px solid var(--accent-color);
+            line-height: 1.6;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            transition: color 0.4s ease;
+        }
+        
+        #context-text {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            padding: 0 1rem;
+            position: relative;
+            z-index: 1;
+            transition: color 0.4s ease;
+        }
+
+        /* === Completion Screen === */
+        #completion-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: 2rem;
+            padding: 2rem;
+            box-shadow: var(--shadow-card);
+            color: white;
+            text-align: center;
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        #completion-screen h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        #completion-screen p {
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        /* === Mobile Menu Button === */
+        #menu-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 60;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s ease;
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        #menu-toggle:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        #menu-toggle svg {
+            color: white;
+        }
+        
+        @media (min-width: 1024px) {
+            #menu-toggle {
+                display: none;
+            }
+        }
+
+        /* === Card Animations === */
+        .card-enter { 
+            opacity: 0; 
+            transform: translateY(50px) scale(0.9); 
+        }
+        
+        .card-active { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .fade-out { 
+            opacity: 0 !important; 
+            transform: scale(0.95) !important; 
+            transition: all 0.3s ease !important;
+        }
+        
+        .pop-on-click { 
+            animation: counterPulse 0.3s ease !important;
+        }
+
+        /* === Responsive === */
+        @media (max-width: 640px) {
+            #counter-display { font-size: 4rem; }
+            #azkar-text { font-size: 1.15rem; line-height: 1.8; }
+            #azkar-card { padding: 1.5rem; }
+        }
+
+        /* === Menu Overlay for Mobile === */
+        #menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .menu-open #menu-overlay {
+            display: block;
+            opacity: 1;
+        }
+
+        @media (min-width: 1024px) {
+            #menu-overlay {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PWA Install Button -->
+    <div id="install-button" style="display: none; position: fixed; top: 1rem; right: 5rem; z-index: 70; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 9999px; padding: 0.5rem 1rem; cursor: pointer; box-shadow: var(--shadow-card); transition: all 0.3s ease; color: var(--text-primary); font-weight: 700; font-size: 0.9rem;">
+        📲 تثبيت التطبيق
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <div id="theme-toggle" onclick="toggleTheme()">
+        <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="theme-icon-moon" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </div>
+
+    <!-- Menu Overlay for Mobile -->
+    <div id="menu-overlay" onclick="toggleMenu()"></div>
+
+    <!-- Main Layout Container -->
+    <div id="app-layout">
+        
+        <!-- Sidebar Menu -->
+        <div id="sidebar-menu">
+            <div class="menu-header">قائمة الأذكار</div>
+            <div id="azkar-menu-list" class="flex flex-col gap-1">
+                <!-- Menu items will be populated here -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content">
+            <!-- Mode Selector Toggle -->
+            <div id="mode-selector">
+                <div id="morning-mode-btn" class="mode-button active" onclick="switchMode('صباح')">
+                    <span>أذكار الصباح</span>
+                </div>
+                <div id="evening-mode-btn" class="mode-button" onclick="switchMode('مساء')">
+                    <span>أذكار المساء</span>
+                </div>
+            </div>
+
+            <div id="flashcard-container">
+                <!-- Azkar Card -->
+                <div id="azkar-card" class="card-enter" tabindex="0">
+                    <div id="counter-display"></div>
+                    <div id="azkar-text"></div>
+                    <div id="azkar-source"></div> 
+                    <div id="context-text"></div>
+                </div>
+
+                <!-- Completion Screen -->
+            <div id="completion-screen" style="display: none; flex-direction: column; justify-content: center; align-items: center; height: 100%; background-color: #e6fffa; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); color: #f5fafa; text-align: center;">
+               <h2 style="font-size: clamp(2.5rem, 8vw, 6rem); margin-bottom: clamp(1rem, 4vw, 3rem); font-weight: 900; line-height: 1.1; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">بحمدالله وفضله</h2>
+             <p style="font-size: clamp(1.75rem, 5vw, 4rem); font-weight: 700; line-height: 1.2; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">تم ورد الأذكار</p>
+            </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Menu Toggle Button -->
+    <div id="menu-toggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </div>
+
+    <script>
+        // Data for Azkar (Morning and Evening combined)
+        const allAzkarData = [
+  // --- Morning Azkar ---
+            { text: "أَعُوذُ بِاللهِ مِنْ الشَّيْطَانِ الرَّجِيمِ. اللّهُ لاَ إِلَـهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلاَّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلاَ يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاَّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالأَرْضِ وَلاَ يَؤُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ.", initialCount: 1, type: "صباح", source: "[آية الكرسى - البقرة 255]. (من قالها حين يصبح أًجير من الجن حتى يمسي ومن قالها حين يمسي أًجير منهم حتى يصبح) رواه النسائي، وصححه الألباني." },
+            { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم. قُلْ هُوَ ٱللَّهُ أَحَدٌ، ٱللَّهُ ٱلصَّمَدُ، لَمْ يَلِدْ وَلَمْ يُولَدْ، وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ. ", initialCount: 3, type: "صباح", source: "جاء في الحديث من رواية عبدالله بن خبيب قال (خرجنا في ليلةِ مطرٍ وظلمةٍ شديدةٍ فطلبَ رسولُ اللَّهِ صلَّى اللهُ عليهِ وسلَّمَ فأدركناهُ فقالَ قل قلتُ ما أقولُ قالَ {قُلْ هُوَ اللَّهُ أَحَدٌ} والمعوِّذتينِ حينَ تصبحُ وحينَ تمسي ثلاثَ مرَّاتٍ تكفيكَ من كلِّ شيءٍ - أخرجه أبو داود (5082)، والترمذي (3575)، وابن أبي عاصم في ((الآحاد والمثاني)) (2572) واللفظ لهم، والنسائي (5428) بنحوه." },
+            { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم. قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ، مِن شَرِّ مَا خَلَقَ، وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ، وَمِن شَرِّ ٱلنَّفَّٰثَٰتِ فِى ٱلْعُقَدِ، وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ. ", initialCount: 3, type: "صباح", source: "جاء في الحديث من رواية عبدالله بن خبيب قال (خرجنا في ليلةِ مطرٍ وظلمةٍ شديدةٍ فطلبَ رسولُ اللَّهِ صلَّى اللهُ عليهِ وسلَّمَ فأدركناهُ فقالَ قل قلتُ ما أقولُ قالَ {قُلْ هُوَ اللَّهُ أَحَدٌ} والمعوِّذتينِ حينَ تصبحُ وحينَ تمسي ثلاثَ مرَّاتٍ تكفيكَ من كلِّ شيءٍ - أخرجه أبو داود (5082)، والترمذي (3575)، وابن أبي عاصم في ((الآحاد والمثاني)) (2572) واللفظ لهم، والنسائي (5428) بنحوه." },
+            { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم. قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ، مَلِكِ ٱلنَّاسِ، إِلَٰهِ ٱلنَّاسِ، مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ، ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ، مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ. ", initialCount: 3, type: "صباح", source: "جاء في الحديث من رواية عبدالله بن خبيب قال (خرجنا في ليلةِ مطرٍ وظلمةٍ شديدةٍ فطلبَ رسولُ اللَّهِ صلَّى اللهُ عليهِ وسلَّمَ فأدركناهُ فقالَ قل قلتُ ما أقولُ قالَ {قُلْ هُوَ اللَّهُ أَحَدٌ} والمعوِّذتينِ حينَ تصبحُ وحينَ تمسي ثلاثَ مرَّاتٍ تكفيكَ من كلِّ شيءٍ - أخرجه أبو داود (5082)، والترمذي (3575)، وابن أبي عاصم في ((الآحاد والمثاني)) (2572) واللفظ لهم، والنسائي (5428) بنحوه." },
+            { text: "أَصْـبَحْنا وَأَصْـبَحَ المُـلْكُ لله وَالحَمدُ لله ، لا إلهَ إلاّ اللّهُ وَحدَهُ لا شَريكَ لهُ، لهُ المُـلكُ ولهُ الحَمْـد، وهُوَ على كلّ شَيءٍ قدير ، رَبِّ أسْـأَلُـكَ خَـيرَ ما في هـذا اليوم وَخَـيرَ ما بَعْـدَه ، وَأَعـوذُ بِكَ مِنْ شَـرِّ ما في هـذا اليوم وَشَرِّ ما بَعْـدَه، رَبِّ أَعـوذُبِكَ مِنَ الْكَسَـلِ وَسـوءِ الْكِـبَر ، رَبِّ أَعـوذُ بِكَ مِنْ عَـذابٍ في النّـارِ وَعَـذابٍ في القَـبْر.", initialCount: 1, type: "صباح", source: "رواه مسلم من حديث عبدالله بن مسعود رضي الله عنه (2723).  من أفراد مسلم على البخاري." },
+            { text: "اللّهـمَّ أَنْتَ رَبِّـي لا إلهَ إلاّ أَنْتَ ، خَلَقْتَنـي وَأَنا عَبْـدُك ، وَأَنا عَلـى عَهْـدِكَ وَوَعْـدِكَ ما اسْتَـطَعْـت ، أَعـوذُبِكَ مِنْ شَـرِّ ما صَنَـعْت ، أَبـوءُ لَـكَ بِنِعْـمَتِـكَ عَلَـيَّ وَأَبـوءُ بِذَنْـبي فَاغْفـِرْ لي فَإِنَّـهُ لا يَغـْفِرُ الذُّنـوبَ إِلاّ أَنْتَ .", initialCount: 1, type: "صباح", source: "من قالَها حينَ يصبحُ موقنًا بِها فماتَ من يومه دخلَ الجنَّةَ ومن قالَها حينَ يمسي موقنًا بِها فَماتَ من ليلتِهِ دخلَ الجنَّةَ - أخرجه البخاري" },
+            { text: "رَضيـتُ بِاللهِ رَبَّـاً وَبِالإسْلامِ ديـناً وَبِمُحَـمَّدٍ صلى الله عليه وسلم نَبِيّـاً. ", initialCount: 3, type: "صباح", source: "في الحديث أن من قالها حين يصبح وحين يمسى كان حقا على الله أن يرضيه يوم القيامة. أخرجه النسائي في ((السنن الكبرى)) (9832)، وأحمد (23111) واللفظ له، وعند ابي داوود  واللفظ لمسلم قال وجبت له الجنة." },
+            { text: "اللّهُـمَّ إِنِّـي أَصْبَـحْتُ أُشْـهِدُك ، وَأُشْـهِدُ حَمَلَـةَ عَـرْشِـك ، وَمَلَائِكَتَكَ ، وَجَمـيعَ خَلْـقِك ، أَنَّـكَ أَنْـتَ اللهُ لا إلهَ إلاّ أَنْـتَ وَحْـدَكَ لا شَريكَ لَـك ، وَأَنَّ مُحَمّـداً عَبْـدُكَ وَرَسـولُـك. ", initialCount: 4, type: "صباح", source: "من قالها حين يصبح أو يمسى أربع مرات أعتقه الله من النار.  أخرجه أبو داود (5069)، والنسائي في ((السنن الكبرى)) (9837) باختلاف يسير." },
+            { text: "اللّهُـمَّ ما أَصْبَـَحَ بي مِـنْ نِعْـمَةٍ أَو بِأَحَـدٍ مِـنْ خَلْـقِك ، فَمِـنْكَ وَحْـدَكَ لا شريكَ لَـك ، فَلَـكَ الْحَمْـدُ وَلَـكَ الشُّكْـر.", initialCount: 1, type: "صباح", source: "من قالها حين يصبح فقد أدَّى شُكرَ يومِه، ومن قالَ مثلَ ذلِك حينَ يُمسي، فقد أدَّى شُكرَ ليلتِه. أخرجه أبو داود (5073)، والنسائي في ((السنن الكبرى)) (9835)، والبيهقي في ((شعب الإيمان)) (4368) باختلاف يسير." },
+            { text: "حَسْبِـيَ اللّهُ لا إلهَ إلاّ هُوَ عَلَـيهِ تَوَكَّـلتُ وَهُوَ رَبُّ العَرْشِ العَظـيم. ", initialCount: 7, type: "صباح", source: "[عن أبي الدرداءِ قال : ] من قال إذا أصبح وإذا أمسَى : حسبِيَ اللهُ لا إلهَ إلا هو عليه توكلتُ وهو ربُّ العرشِ العظيمِ سبعَ مراتٍ كفاه اللهُ ما أهمَّه -  مجموع فتاوى ابن باز 294/9" },
+            { text: "بِسـمِ اللهِ الذي لا يَضُـرُّ مَعَ اسمِـهِ شَيءٌ في الأرْضِ وَلا في السّمـاءِ وَهـوَ السّمـيعُ العَلـيم. ", initialCount: 3, type: "صباح", source: "من قالها ثلاث مرات لم تصبْه فجأةُ بلاءٍ حتى يُصبحَ ، ومَن قالها حينَ يُصبحُ ثلاثَ مراتٍ لم تُصبْه فجأةُ بلاءٍ حتى يُمسي - أخرجه أبو داود (5088) واللفظ له، والترمذي (3388)، والنسائي في ((السنن الكبرى)) (9843)، وابن ماجه (3869)، وأحمد (446)." },
+            { text: "اللّهُـمَّ بِكَ أَصْـبَحْنا وَبِكَ أَمْسَـينا ، وَبِكَ نَحْـيا وَبِكَ نَمُـوتُ وَإِلَـيْكَ النُّـشُور.", initialCount: 1, type: "صباح", source: "رواه الترمذي في السنن عن إبي هريرة رضي الله عنه (3391)." },
+            { text: "أَصْبَـحْـنا عَلَى فِطْرَةِ الإسْلاَمِ، وَعَلَى كَلِمَةِ الإِخْلاَصِ، وَعَلَى دِينِ نَبِيِّنَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ، وَعَلَى مِلَّةِ أَبِينَا إبْرَاهِيمَ حَنِيفاً مُسْلِماً وَمَا كَانَ مِنَ المُشْرِكِينَ.", initialCount: 1, type: "صباح", source: "أخرجه النسائي في ((السنن الكبرى)) (9829)، وأحمد (15367) واللفظ له." },
+            { text: "سُبْحـانَ اللهِ وَبِحَمْـدِهِ عَدَدَ خَلْـقِه ، وَرِضـا نَفْسِـه ، وَزِنَـةَ عَـرْشِـه ، وَمِـدادَ كَلِمـاتِـه. ", initialCount: 3, type: "صباح", source: "أخرجه البيهقي في ((الدعوات الكبير)) (127) باختلاف يسير، وأحمد (2334)، والنسائي في ((الكبرى)) (9917) بنحوه." },
+            { text: "اللّهُـمَّ عافِـني في بَدَنـي ، اللّهُـمَّ عافِـني في سَمْـعي ، اللّهُـمَّ عافِـني في بَصَـري ، لا إلهَ إلاّ أَنْـتَ. ", initialCount: 3, type: "صباح", source: " أخرجه أبو داود (5090)، وأحمد (20430) والنسائي في ((السنن الكبرى)) (9766) جميعا بلفظ الحديث مطولا." },
+            { text: "اللّهُـمَّ إِنّـي أَعـوذُ بِكَ مِنَ الْكُـفر ، وَالفَـقْر ، وَأَعـوذُ بِكَ مِنْ عَذابِ القَـبْر ، لا إلهَ إلاّ أَنْـتَ. ", initialCount: 3, type: "صباح", source: " أخرجه أبو داود (5090)، وأحمد (20430) والنسائي في ((السنن الكبرى)) (9766) جميعا بلفظ الحديث مطولا." },
+            { text: "اللّهُـمَّ إِنِّـي أسْـأَلُـكَ العَـفْوَ وَالعـافِـيةَ في الدُّنْـيا وَالآخِـرَة ، اللّهُـمَّ إِنِّـي أسْـأَلُـكَ العَـفْوَ وَالعـافِـيةَ في ديني وَدُنْـيايَ وَأهْـلي وَمالـي ، اللّهُـمَّ اسْتُـرْ عـوْراتي وَآمِـنْ رَوْعاتـي ، اللّهُـمَّ احْفَظْـني مِن بَـينِ يَدَيَّ وَمِن خَلْفـي وَعَن يَمـيني وَعَن شِمـالي ، وَمِن فَوْقـي ، وَأَعـوذُ بِعَظَمَـتِكَ أَن أُغْـتالَ مِن تَحْتـي.", initialCount: 1, type: "صباح", source: "أخرجه أبو داود (5074)، وابن ماجه (3871)، وأحمد (4785) باختلاف يسير." },
+            { text: "يَا حَيُّ يَا قيُّومُ بِرَحْمَتِكَ أسْتَغِيثُ أصْلِحْ لِي شَأنِي كُلَّهُ وَلاَ تَكِلْنِي إلَى نَفْسِي طَـرْفَةَ عَيْنٍ. ", initialCount: 1, type: "صباح", source: "أخرجه النسائي في ((الكبرى)) (10330)، وابن السني في (48)، وابن عدي في ((الكامل في ضعفاء)) (5/ 530) بلفظه." },
+            { text: "أَصْبَـحْـنا وَأَصْبَـحْ المُـلكُ للهِ رَبِّ العـالَمـين ، اللّهُـمَّ إِنِّـي أسْـأَلُـكَ خَـيْرَ هـذا الـيَوْم ، فَـتْحَهُ ، وَنَصْـرَهُ ، وَنـورَهُ وَبَـرَكَتَـهُ ، وَهُـداهُ ، وَأَعـوذُ بِـكَ مِـنْ شَـرِّ ما فـيهِ وَشَـرِّ ما بَعْـدَه.", initialCount: 1, type: "صباح", source: "أخرجه أبو داود (5084) واللفظ له، والطبراني (3/296) (3453) ." },
+            { text: "اللّهُـمَّ عالِـمَ الغَـيْبِ وَالشّـهادَةِ فاطِـرَ السّماواتِ وَالأرْضِ رَبَّ كـلِّ شَـيءٍ وَمَليـكَه ، أَشْهَـدُ أَنْ لا إِلـهَ إِلاّ أَنْت ، أَعـوذُ بِكَ مِن شَـرِّ نَفْسـي وَمِن شَـرِّ الشَّيْـطانِ وَشِرْكِهِ ، وَأَنْ أَقْتَـرِفَ عَلـى نَفْسـي سوءاً أَوْ أَجُـرَّهُ إِلـى مُسْـلِم.", initialCount: 1, type: "صباح", source: "أخرجه أبو داود (5067)، والترمذي (3392) واللفظ له، والنسائي في ((السنن الكبرى)) (7699)، وأحمد (51)" },
+            { text: "أَعـوذُ بِكَلِمـاتِ اللّهِ التّـامّـاتِ مِنْ شَـرِّ ما خَلَـق. ", initialCount: 3, type: "صباح", source: "من قالها حين يصبح لم تضرهُ عقربٌ حتى يمسِي ، ومن قالها حينَ يمسي لم تضرُّه حتى يصبح - أخرجه مسلم (2709) بنحوه وفي رواية مَن قال إذا أمْسى ثلاثَ مَرَّاتٍ: أعوذُ بكَلِماتِ اللهِ التَّامَّاتِ مِن شَرِّ ما خَلَقَ، لم تَضُرَّه حُمَةٌ تلك اللَّيلةَ. قال: فكان أهلُنا قد تَعَلَّموها، فكانوا يقولونَها كلَّ لَيلةٍ، فلُدِغتْ جاريةٌ منهم، فلم تَجِدْ لها ألَمًا.  " },
+            { text: "اللَّهُمَّ صَلِّ وَسَلِّمْْ على نَبِيِّنَا مُحمَّد. ", initialCount: 1, type: "صباح", source: "من صلى عليّ حين يصبح عشراً وحين يمسى عشراً أدركته شفاعتي يوم القيامة. أخرجه الطبراني كما في ((الترغيب والترهيب)) (1/261)." },
+            { text: "اللهمَّ إني أعوذُ بك أنْ أُشرِكَ بك و أنا أعلمُ ، و أستغفرُك لما لا أعلمُ. ", initialCount: 1, type: "صباح", source: "أخرجه أبو يعلى (60 )، وابن حبان في ((المجروحين)) (3/ 130)، وابن السني في ((عمل اليوم والليلة)) (286 )." },
+            { text: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ الْهَمِّ وَالْحَزَنِ، وَأَعُوذُ بِكَ مِنْ الْعَجْزِ وَالْكَسَلِ، وَأَعُوذُ بِكَ مِنْ الْجُبْنِ وَالْبُخْلِ، وَأَعُوذُ بِكَ مِنْ غَلَبَةِ الدَّيْنِ، وَقَهْرِ الرِّجَالِ. ", initialCount: 1, type: "صباح", source: "أخرجه أبو داود (1555)، والبيهقي في ((الدعوات الكبير)) (305)، والمزي في ((تهذيب الكمال)) (23/ 105) جميعا بلفظ الحديث، وفي أوله قصة." },
+            { text: "أسْتَغْفِرُ اللهَ العَظِيمَ الَّذِي لاَ إلَهَ إلاَّ هُوَ، الحَيُّ القَيُّومُ، وَأتُوبُ إلَيهِ. ", initialCount: 3, type: "صباح", source: "أخرجه الخطيب البغدادي في ((موضح الأوهام)) (2/ 309) واللفظ له، وابن السني في ((عمل اليوم والليلة)) (137)، وابن عدي في ((الكامل)) (2/ 317) بلفظه وزادا: ثلاث مرات." },
+            { text: "يَا رَبِّ , لَكَ الْحَمْدُ كَمَا يَنْبَغِي لِجَلَالِ وَجْهِكَ , وَلِعَظِيمِ سُلْطَانِكَ. ", initialCount: 1, type: "صباح", source: "أخرجه ابن ماجه (3801) واللفظ له، والطبراني (12/344) (13297)، والبيهقي في ((شعب الإيمان)) (4387) باختلاف يسير." },
+            { text: "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا.", initialCount: 1, type: "صباح", source: "روت أم سلمة أم المؤمنين رضي الله عنها وأرضاها أن رسول الله صلى الله علية وسلم كانَ يقولُه إذا صلَّى الصُّبحَ حينَ يسلِّمُ.  أخرجه عبد بن حميد (1533) ، وأخرجه ابن ماجه (925)، وأحمد (26602) باختلاف يسير." },
+            { text: "اللَّهُمَّ أَنْتَ رَبِّي لا إِلَهَ إِلا أَنْتَ ، عَلَيْكَ تَوَكَّلْتُ ، وَأَنْتَ رَبُّ الْعَرْشِ الْعَظِيمِ , مَا شَاءَ اللَّهُ كَانَ ، وَمَا لَمْ يَشَأْ لَمْ يَكُنْ ، وَلا حَوْلَ وَلا قُوَّةَ إِلا بِاللَّهِ الْعَلِيِّ الْعَظِيمِ , أَعْلَمُ أَنَّ اللَّهَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ ، وَأَنَّ اللَّهَ قَدْ أَحَاطَ بِكُلِّ شَيْءٍ عِلْمًا , اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي ، وَمِنْ شَرِّ كُلِّ دَابَّةٍ أَنْتَ آخِذٌ بِنَاصِيَتِهَا ، إِنَّ رَبِّي عَلَى صِرَاطٍ مُسْتَقِيمٍ.", initialCount: 1, type: "صباح", source: "أخرجه ابن السني في ((عمل اليوم والليلة)) (57)، والطبراني في ((الدعاء)) (343)، والبيهقي في ((الدلائل)) (7/ 121) باختلاف يسير. ذكر طيب." },
+            { text: "لَا إلَه إلّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءِ قَدِيرِ. ", initialCount: 100, type: "صباح", source: "جاء في الحديث أن من قالها في يومٍ مائةَ مرَّةٍ كانَ لَهُ عَدلُ عشرَ رقابٍ ، وَكُتِبت لَهُ مائةُ حسنةٍ ، ومُحِيَت عنهُ مائةُ سيِّئةٍ ، وَكانت لَهُ حِرزًا منَ الشَّيطانِ يومَهُ ذلِكَ ، حتَّى يُمْسيَ ، ولَم يأتِ أحدٌ بأفضلَ مِمَّا جاءَ بِهِ ؛ إلَّا أحدٌ عمِلَ أكْثرَ من ذلِكَ. أخرجه البخاري (3293)، ومسلم (2691)، والترمذي (3468) واللفظ له، والنسائي في ((السنن الكبرى)) (9853)، وابن ماجه (3798)، وأحمد (8008)." },
+            { text: "سُبْحـانَ اللهِ وَبِحَمْـدِهِ. ", initialCount: 100, type: "صباح", source: "من قالها مائةَ مرةٍ غُفرَتْ له ذنوبُه وإنْ كانتْ مثلَ زبَدِ البحرِ. أخرجه الترمذي (3466) واللفظ له، وأخرجه البخاري (6405)، ومسلم (2691) بلفظ (مائة مرة حطت خطاياه)." },
+            { text: "أسْتَغْفِرُ اللهَ وَأتُوبُ إلَيْهِ. ", initialCount: 100, type: "صباح", source: "روى مسلم في صحيحة من رواية الأغر المزني أبو مالك حديث ( إنَّه لَيُغَانُ علَى قَلْبِي، وإنِّي لَأَسْتَغْفِرُ اللَّهَ في اليَومِ مِائَةَ مَرَّةٍ.) (2702). أخرجه أبو داود (1515)، وأحمد (17848)، وابن حبان (931) جميعهم بلفظه." },
+
+
+            // --- Evening Azkar ---
+            { text: "أَعُوذُ بِاللهِ مِنْ الشَّيْطَانِ الرَّجِيمِ. اللّهُ لاَ إِلَـهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلاَّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلاَ يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاَّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالأَرْضِ وَلاَ يَؤُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ.", initialCount: 1, type: "مساء", source: "[آية الكرسى - البقرة 255]. (من قالها حين يصبح أًجير من الجن حتى يمسي ومن قالها حين يمسي أًجير منهم حتى يصبح) رواه النسائي، وصححه الألباني." },
+            { text: "أَعُوذُ بِاللهِ مِنْ الشَّيْطَانِ الرَّجِيمِ. آمَنَ الرَّسُولُ بِمَا أُنْزِلَ إِلَيْهِ مِنْ رَبِّهِ وَالْمُؤْمِنُونَ ۚ ... إلى آخر سورة البقرة.", initialCount: 1, type: "مساء", source: "روى البخاري في صحيحة من رواية أبي مسعود عقبة بن عمرو حديث (الآيَتانِ مِن آخِرِ سُورَةِ البَقَرَةِ، مَن قَرَأَهُما في لَيْلَةٍ كَفَتاهُ.) أخرجه البخاري (4008)، ومسلم (807)." },
+            { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم. قُلْ هُوَ ٱللَّهُ أَحَدٌ، ٱللَّهُ ٱلصَّمَدُ، لَمْ يَلِدْ وَلَمْ يُولَدْ، وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ. ", initialCount: 3, type: "مساء", source: "جاء في الحديث من رواية عبدالله بن خبيب قال (خرجنا في ليلةِ مطرٍ وظلمةٍ شديدةٍ فطلبَ رسولُ اللَّهِ صلَّى اللهُ عليهِ وسلَّمَ فأدركناهُ فقالَ قل قلتُ ما أقولُ قالَ {قُلْ هُوَ اللَّهُ أَحَدٌ} والمعوِّذتينِ حينَ تصبحُ وحينَ تمسي ثلاثَ مرَّاتٍ تكفيكَ من كلِّ شيءٍ - أخرجه أبو داود (5082)، والترمذي (3575)، وابن أبي عاصم في ((الآحاد والمثاني)) (2572) واللفظ لهم، والنسائي (5428) بنحوه." },
+            { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم. قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ، مِن شَرِّ مَا خَلَقَ، وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ، وَمِن شَرِّ ٱلنَّفَّٰثَٰتِ فِى ٱلْعُقَدِ، وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ. ", initialCount: 3, type: "مساء", source: "جاء في الحديث من رواية عبدالله بن خبيب قال (خرجنا في ليلةِ مطرٍ وظلمةٍ شديدةٍ فطلبَ رسولُ اللَّهِ صلَّى اللهُ عليهِ وسلَّمَ فأدركناهُ فقالَ قل قلتُ ما أقولُ قالَ {قُلْ هُوَ اللَّهُ أَحَدٌ} والمعوِّذتينِ حينَ تصبحُ وحينَ تمسي ثلاثَ مرَّاتٍ تكفيكَ من كلِّ شيءٍ - أخرجه أبو داود (5082)، والترمذي (3575)، وابن أبي عاصم في ((الآحاد والمثاني)) (2572) واللفظ لهم، والنسائي (5428) بنحوه." },
+            { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم. قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ، مَلِكِ ٱلنَّاسِ، إِلَٰهِ ٱلنَّاسِ، مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ، ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ، مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ. ", initialCount: 3, type: "مساء", source: "جاء في الحديث من رواية عبدالله بن خبيب قال (خرجنا في ليلةِ مطرٍ وظلمةٍ شديدةٍ فطلبَ رسولُ اللَّهِ صلَّى اللهُ عليهِ وسلَّمَ فأدركناهُ فقالَ قل قلتُ ما أقولُ قالَ {قُلْ هُوَ اللَّهُ أَحَدٌ} والمعوِّذتينِ حينَ تصبحُ وحينَ تمسي ثلاثَ مرَّاتٍ تكفيكَ من كلِّ شيءٍ - أخرجه أبو داود (5082)، والترمذي (3575)، وابن أبي عاصم في ((الآحاد والمثاني)) (2572) واللفظ لهم، والنسائي (5428) بنحوه." },
+            { text: "أَمْسَيْـنا وَأَمْسـى المـلكُ لله وَالحَمدُ لله ، لا إلهَ إلاّ اللّهُ وَحدَهُ لا شَريكَ لهُ، لهُ المُـلكُ ولهُ الحَمْـد، وهُوَ على كلّ شَيءٍ قدير ، رَبِّ أسْـأَلُـكَ خَـيرَ ما في هـذهِ اللَّـيْلَةِ وَخَـيرَ ما بَعْـدَهـا ، وَأَعـوذُ بِكَ مِنْ شَـرِّ ما في هـذهِ اللَّـيْلةِ وَشَرِّ ما بَعْـدَهـا ، رَبِّ أَعـوذُبِكَ مِنَ الْكَسَـلِ وَسـوءِ الْكِـبَر ، رَبِّ أَعـوذُ بِكَ مِنْ عَـذابٍ في النّـارِ وَعَـذابٍ في القَـبْر.", initialCount: 1, type: "مساء", source: "رواه مسلم من حديث عبدالله بن مسعود رضي الله عنه (2723).  من أفراد مسلم على البخاري." },
+            { text: "اللّهـمَّ أَنْتَ رَبِّـي لا إلهَ إلاّ أَنْتَ ، خَلَقْتَنـي وَأَنا عَبْـدُك ، وَأَنا عَلـى عَهْـدِكَ وَوَعْـدِكَ ما اسْتَـطَعْـت ، أَعـوذُبِكَ مِنْ شَـرِّ ما صَنَـعْت ، أَبـوءُ لَـكَ بِنِعْـمَتِـكَ عَلَـيَّ وَأَبـوءُ بِذَنْـبي فَاغْفـِرْ لي فَإِنَّـهُ لا يَغـْفِرُ الذُّنـوبَ إِلاّ أَنْتَ .", initialCount: 1, type: "مساء", source: "من قالَها حينَ يصبحُ موقنًا بِها فماتَ من يومه دخلَ الجنَّةَ ومن قالَها حينَ يمسي موقنًا بِها فَماتَ من ليلتِهِ دخلَ الجنَّةَ - أخرجه البخاري" },
+            { text: "رَضيـتُ بِاللهِ رَبَّـاً وَبِالإسْلامِ ديـناً وَبِمُحَـمَّدٍ صلى الله عليه وسلم نَبِيّـاً. ", initialCount: 3, type: "مساء", source: "في الحديث أن من قالها حين يصبح وحين يمسى كان حقا على الله أن يرضيه يوم القيامة. أخرجه النسائي في ((السنن الكبرى)) (9832)، وأحمد (23111) واللفظ له، وعند ابي داوود  واللفظ لمسلم قال وجبت له الجنة." },
+            { text: "اللّهُـمَّ إِنِّـي أَمسيتُ أُشْـهِدُك ، وَأُشْـهِدُ حَمَلَـةَ عَـرْشِـك ، وَمَلَائِكَتَكَ ، وَجَمـيعَ خَلْـقِك ، أَنَّـكَ أَنْـتَ اللهُ لا إلهَ إلاّ أَنْـتَ وَحْـدَكَ لا شَريكَ لَـك ، وَأَنَّ مُحَمّـداً عَبْـدُكَ وَرَسـولُـك. ", initialCount: 4, type: "مساء", source: "من قالها حين يصبح أو يمسى أربع مرات أعتقه الله من النار.  أخرجه أبو داود (5069)، والنسائي في ((السنن الكبرى)) (9837) باختلاف يسير." },
+            { text: "اللّهُـمَّ ما أَمسى بي مِـنْ نِعْـمَةٍ أَو بِأَحَـدٍ مِـنْ خَلْـقِك ، فَمِـنْكَ وَحْـدَكَ لا شريكَ لَـك ، فَلَـكَ الْحَمْـدُ وَلَـكَ الشُّكْـر.", initialCount: 1, type: "مساء", source: "من قالها حين يصبح فقد أدَّى شُكرَ يومِه، ومن قالَ مثلَ ذلِك حينَ يُمسي، فقد أدَّى شُكرَ ليلتِه. أخرجه أبو داود (5073)، والنسائي في ((السنن الكبرى)) (9835)، والبيهقي في ((شعب الإيمان)) (4368) باختلاف يسير." },
+            { text: "حَسْبِـيَ اللّهُ لا إلهَ إلاّ هُوَ عَلَـيهِ تَوَكَّـلتُ وَهُوَ رَبُّ العَرْشِ العَظـيم. ", initialCount: 7, type: "مساء", source: "[عن أبي الدرداءِ قال : ] من قال إذا أصبح وإذا أمسَى : حسبِيَ اللهُ لا إلهَ إلا هو عليه توكلتُ وهو ربُّ العرشِ العظيمِ سبعَ مراتٍ كفاه اللهُ ما أهمَّه -  مجموع فتاوى ابن باز 294/9" },
+            { text: "بِسـمِ اللهِ الذي لا يَضُـرُّ مَعَ اسمِـهِ شَيءٌ في الأرْضِ وَلا في السّمـاءِ وَهـوَ السّمـيعُ العَلـيم. ", initialCount: 3, type: "مساء", source: "من قالها ثلاث مرات لم تصبْه فجأةُ بلاءٍ حتى يُصبحَ ، ومَن قالها حينَ يُصبحُ ثلاثَ مراتٍ لم تُصبْه فجأةُ بلاءٍ حتى يُمسي - أخرجه أبو داود (5088) واللفظ له، والترمذي (3388)، والنسائي في ((السنن الكبرى)) (9843)، وابن ماجه (3869)، وأحمد (446)." },
+            { text: "اللّهُـمَّ بِكَ أَمْسَـينا وَبِكَ أَصْـبَحْنا، وَبِكَ نَحْـيا وَبِكَ نَمُـوتُ وَإِلَـيْكَ الْمَصِيرُ.", initialCount: 1, type: "مساء", source: "رواه الترمذي في السنن عن إبي هريرة رضي الله عنه (3391)." },
+            { text: "أَمْسَيْنَا عَلَى فِطْرَةِ الإسْلاَمِ، وَعَلَى كَلِمَةِ الإِخْلاَصِ، وَعَلَى دِينِ نَبِيِّنَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ، وَعَلَى مِلَّةِ أَبِينَا إبْرَاهِيمَ حَنِيفاً مُسْلِماً وَمَا كَانَ مِنَ المُشْرِكِينَ.", initialCount: 1, type: "مساء", source: "أخرجه النسائي في ((السنن الكبرى)) (9829)، وأحمد (15367) واللفظ له." },
+            { text: "سُبْحـانَ اللهِ وَبِحَمْـدِهِ عَدَدَ خَلْـقِه ، وَرِضـا نَفْسِـه ، وَزِنَـةَ عَـرْشِـه ، وَمِـدادَ كَلِمـاتِـه. ", initialCount: 3, type: "مساء", source: "أخرجه البيهقي في ((الدعوات الكبير)) (127) باختلاف يسير، وأحمد (2334)، والنسائي في ((الكبرى)) (9917) بنحوه." },
+            { text: "اللّهُـمَّ عافِـني في بَدَنـي ، اللّهُـمَّ عافِـني في سَمْـعي ، اللّهُـمَّ عافِـني في بَصَـري ، لا إلهَ إلاّ أَنْـتَ. ", initialCount: 3, type: "مساء", source: " أخرجه أبو داود (5090)، وأحمد (20430) والنسائي في ((السنن الكبرى)) (9766) جميعا بلفظ الحديث مطولا." },
+            { text: "اللّهُـمَّ إِنّـي أَعـوذُ بِكَ مِنَ الْكُـفر ، وَالفَـقْر ، وَأَعـوذُ بِكَ مِنْ عَذابِ القَـبْر ، لا إلهَ إلاّ أَنْـتَ. ", initialCount: 3, type: "مساء", source: " أخرجه أبو داود (5090)، وأحمد (20430) والنسائي في ((السنن الكبرى)) (9766) جميعا بلفظ الحديث مطولا." },
+            { text: "اللّهُـمَّ إِنِّـي أسْـأَلُـكَ العَـفْوَ وَالعـافِـيةَ في الدُّنْـيا وَالآخِـرَة ، اللّهُـمَّ إِنِّـي أسْـأَلُـكَ العَـفْوَ وَالعـافِـيةَ في ديني وَدُنْـيايَ وَأهْـلي وَمالـي ، اللّهُـمَّ اسْتُـرْ عـوْراتي وَآمِـنْ رَوْعاتـي ، اللّهُـمَّ احْفَظْـني مِن بَـينِ يَدَيَّ وَمِن خَلْفـي وَعَن يَمـيني وَعَن شِمـالي ، وَمِن فَوْقـي ، وَأَعـوذُ بِعَظَمَـتِكَ أَن أُغْـتالَ مِن تَحْتـي.", initialCount: 1, type: "مساء", source: "أخرجه أبو داود (5074)، وابن ماجه (3871)، وأحمد (4785) باختلاف يسير." },
+            { text: "يَا حَيُّ يَا قيُّومُ بِرَحْمَتِكَ أسْتَغِيثُ أصْلِحْ لِي شَأنِي كُلَّهُ وَلاَ تَكِلْنِي إلَى نَفْسِي طَـرْفَةَ عَيْنٍ. ", initialCount: 3, type: "مساء", source: "أخرجه النسائي في ((الكبرى)) (10330)، وابن السني في (48)، وابن عدي في ((الكامل في ضعفاء)) (5/ 530) بلفظه." },
+            { text: "أَمْسَيْنا وَأَمْسَى الْمُلْكُ للهِ رَبِّ الْعَالَمَيْنِ، اللَّهُمَّ إِنَّي أسْأَلُكَ خَيْرَ هَذَه اللَّيْلَةِ فَتْحَهَا ونَصْرَهَا، ونُوْرَهَا وبَرَكَتهَا، وَهُدَاهَا، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فيهِا وَشَرَّ مَا بَعْدَهَا.", initialCount: 1, type: "مساء", source: "أخرجه أبو داود (5084) واللفظ له، والطبراني (3/296) (3453) ." },
+            { text: "اللّهُـمَّ عالِـمَ الغَـيْبِ وَالشّـهادَةِ فاطِـرَ السّماواتِ وَالأرْضِ رَبَّ كـلِّ شَـيءٍ وَمَليـكَه ، أَشْهَـدُ أَنْ لا إِلـهَ إِلاّ أَنْت ، أَعـوذُ بِكَ مِن شَـرِّ نَفْسـي وَمِن شَـرِّ الشَّيْـطانِ وَشِرْكِهِ ، وَأَنْ أَقْتَـرِفَ عَلـى نَفْسـي سوءاً أَوْ أَجُـرَّهُ إِلـى مُسْـلِم.", initialCount: 1, type: "مساء", source: "أخرجه أبو داود (5067)، والترمذي (3392) واللفظ له، والنسائي في ((السنن الكبرى)) (7699)، وأحمد (51)." },
+            { text: "أَعـوذُ بِكَلِمـاتِ اللّهِ التّـامّـاتِ مِنْ شَـرِّ ما خَلَـق. ", initialCount: 3, type: "مساء", source: "من قالها حين يصبح لم تضرهُ عقربٌ حتى يمسِي ، ومن قالها حينَ يمسي لم تضرُّه حتى يصبح - أخرجه مسلم (2709) بنحوه وفي رواية مَن قال إذا أمْسى ثلاثَ مَرَّاتٍ: أعوذُ بكَلِماتِ اللهِ التَّامَّاتِ مِن شَرِّ ما خَلَقَ، لم تَضُرَّه حُمَةٌ تلك اللَّيلةَ. قال: فكان أهلُنا قد تَعَلَّموها، فكانوا يقولونَها كلَّ لَيلةٍ، فلُدِغتْ جاريةٌ منهم، فلم تَجِدْ لها ألَمًا." },
+            { text: "اللَّهُمَّ صَلِّ وَسَلِّمْْ على نَبِيِّنَا مُحمَّد. ", initialCount: 1, type: "مساء", source: "من صلى عليّ حين يصبح عشراً وحين يمسى عشراً أدركته شفاعتي يوم القيامة. أخرجه الطبراني كما في ((الترغيب والترهيب)) (1/261)." },
+            { text: "اللهمَّ إني أعوذُ بك أنْ أُشرِكَ بك و أنا أعلمُ ، و أستغفرُك لما لا أعلمُ. ", initialCount: 1, type: "مساء", source: "أخرجه أبو يعلى (60 )، وابن حبان في ((المجروحين)) (3/ 130)، وابن السني في ((عمل اليوم والليلة)) (286 )." },
+            { text: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ الْهَمِّ وَالْحَزَنِ، وَأَعُوذُ بِكَ مِنْ الْعَجْزِ وَالْكَسَلِ، وَأَعُوذُ بِكَ مِنْ الْجُبْنِ وَالْبُخْلِ، وَأَعُوذُ بِكَ مِنْ غَلَبَةِ الدَّيْنِ، وَقَهْرِ الرِّجَالِ. ", initialCount: 1, type: "مساء", source: "أخرجه أبو داود (1555)، والبيهقي في ((الدعوات الكبير)) (305)، والمزي في ((تهذيب الكمال)) (23/ 105) جميعا بلفظ الحديث، وفي أوله قصة." },
+            { text: "أسْتَغْفِرُ اللهَ العَظِيمَ الَّذِي لاَ إلَهَ إلاَّ هُوَ، الحَيُّ القَيُّومُ، وَأتُوبُ إلَيهِ. ", initialCount: 3, type: "مساء", source: "أخرجه الخطيب البغدادي في ((موضح الأوهام)) (2/ 309) واللفظ له، وابن السني في ((عمل اليوم والليلة)) (137)، وابن عدي في ((الكامل)) (2/ 317) بلفظه وزادا: ثلاث مرات." },
+            { text: "يَا رَبِّ , لَكَ الْحَمْدُ كَمَا يَنْبَغِي لِجَلَالِ وَجْهِكَ , وَلِعَظِيمِ سُلْطَانِكَ. ", initialCount: 1, type: "مساء", source: "أخرجه ابن ماجه (3801) واللفظ له، والطبراني (12/344) (13297)، والبيهقي في ((شعب الإيمان)) (4387) باختلاف يسير." },
+            { text: "اللَّهُمَّ أَنْتَ رَبِّي لا إِلَهَ إِلا أَنْتَ ، عَلَيْكَ تَوَكَّلْتُ ، وَأَنْتَ رَبُّ الْعَرْشِ الْعَظِيمِ , مَا شَاءَ اللَّهُ كَانَ ، وَمَا لَمْ يَشَأْ لَمْ يَكُنْ ، وَلا حَوْلَ وَلا قُوَّةَ إِلا بِاللَّهِ الْعَلِيِّ الْعَظِيمِ , أَعْلَمُ أَنَّ اللَّهَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ ، وَأَنَّ اللَّهَ قَدْ أَحَاطَ بِكُلِّ شَيْءٍ عِلْمًا , اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي ، وَمِنْ شَرِّ كُلِّ دَابَّةٍ أَنْتَ آخِذٌ بِنَاصِيَتِهَا ، إِنَّ رَبِّي عَلَى صِرَاطٍ مُسْتَقِيمٍ.", initialCount: 1, type: "مساء", source: "أخرجه ابن السني في ((عمل اليوم والليلة)) (57)، والطبراني في ((الدعاء)) (343)، والبيهقي في ((الدلائل)) (7/ 121) باختلاف يسير. ذكر طيب." },
+            { text: "لَا إلَه إلّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءِ قَدِيرِ. ", initialCount: 100, type: "مساء", source: "جاء في الحديث أن من قالها في يومٍ مائةَ مرَّةٍ كانَ لَهُ عَدلُ عشرَ رقابٍ ، وَكُتِبت لَهُ مائةُ حسنةٍ ، ومُحِيَت عنهُ مائةُ سيِّئةٍ ، وَكانت لَهُ حِرزًا منَ الشَّيطانِ يومَهُ ذلِكَ ، حتَّى يُمْسيَ ، ولَم يأتِ أحدٌ بأفضلَ مِمَّا جاءَ بِهِ ؛ إلَّا أحدٌ عمِلَ أكْثرَ من ذلِكَ. أخرجه البخاري (3293)، ومسلم (2691)، والترمذي (3468) واللفظ له، والنسائي في ((السنن الكبرى)) (9853)، وابن ماجه (3798)، وأحمد (8008)." },
+            { text: "سُبْحـانَ اللهِ وَبِحَمْـدِهِ. ", initialCount: 100, type: "مساء", source: "من قالها مائةَ مرةٍ غُفرَتْ له ذنوبُه وإنْ كانتْ مثلَ زبَدِ البحرِ. أخرجه الترمذي (3466) واللفظ له، وأخرجه البخاري (6405)، ومسلم (2691) بلفظ (مائة مرة حطت خطاياه)." },
+            { text: "أسْتَغْفِرُ اللهَ وَأتُوبُ إلَيْهِ. ", initialCount: 100, type: "مساء", source: "روى مسلم في صحيحة من رواية الأغر المزني أبو مالك حديث ( إنَّه لَيُغَانُ علَى قَلْبِي، وإنِّي لَأَسْتَغْفِرُ اللَّهَ في اليَومِ مِائَةَ مَرَّةٍ.) (2702). أخرجه أبو داود (1515)، وأحمد (17848)، وابن حبان (931) جميعهم بلفظه." },
+        ];
+
+
+        // --- Global Variables ---
+        let currentMode = 'صباح';
+        let filteredAzkar = [];
+        let currentAzkarIndex = 0;
+        let currentCount = 0;
+        let isTransitioning = false;
+        let isMenuOpen = false;
+
+        // --- DOM Elements ---
+        const appLayout = document.getElementById('app-layout');
+        const azkarCard = document.getElementById('azkar-card');
+        const counterDisplay = document.getElementById('counter-display');
+        const azkarText = document.getElementById('azkar-text');
+        const azkarSource = document.getElementById('azkar-source');
+        const contextText = document.getElementById('context-text');
+        const completionScreen = document.getElementById('completion-screen');
+        const menuToggleBtn = document.getElementById('menu-toggle');
+        const menuList = document.getElementById('azkar-menu-list');
+        const morningBtn = document.getElementById('morning-mode-btn');
+        const eveningBtn = document.getElementById('evening-mode-btn');
+        const themeIconSun = document.getElementById('theme-icon-sun');
+        const themeIconMoon = document.getElementById('theme-icon-moon');
+
+
+        // === Theme Handling ===
+        function initTheme() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (localStorage.getItem('theme') === 'dark' || (localStorage.getItem('theme') === null && prefersDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeIconSun.style.display = 'none';
+                themeIconMoon.style.display = 'block';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeIconSun.style.display = 'block';
+                themeIconMoon.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                themeIconSun.style.display = 'block';
+                themeIconMoon.style.display = 'none';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                themeIconSun.style.display = 'none';
+                themeIconMoon.style.display = 'block';
+            }
+        }
+
+        // === Core Logic Functions ===
+
+        //  This function updates the counter number display.
+        function updateCounterDisplay() {
+            counterDisplay.textContent = currentCount;
+        }
+
+        //  This function  updates the context text when a new Azkar is loaded.
+        function goToAzkar(index, smooth = true) {
+            if (index >= filteredAzkar.length) {
+                showCompletionScreen();
+                return;
+            }
+
+            // Update state
+            currentAzkarIndex = index;
+            currentCount = filteredAzkar[index].initialCount;
+            
+            // Close menu on navigation
+            if (isMenuOpen) {
+                toggleMenu();
+            }
+
+            const currentAzkar = filteredAzkar[index];
+
+            // Update content elements
+            azkarText.textContent = currentAzkar.text;
+            azkarSource.textContent = currentAzkar.source || "لا يوجد مصدر محدد مذكور.";
+            
+            // Re-added the full context string here, where it belongs:
+            contextText.textContent = ` (الذكر رقم ${currentAzkarIndex + 1} من ${filteredAzkar.length} | أذكار ${currentAzkar.type})`;
+            
+            updateCounterDisplay();
+
+            // Set animation class
+            azkarCard.classList.remove('card-enter', 'card-active', 'fade-out');
+            void azkarCard.offsetWidth; // Trigger reflow
+            azkarCard.classList.add('card-active');
+
+            // Update menu selection
+            renderAzkarMenu();
+        }
+
+        function renderAzkarMenu() {
+            menuList.innerHTML = '';
+            filteredAzkar.forEach((azkar, index) => {
+                const menuItem = document.createElement('div');
+                menuItem.className = `menu-item ${index === currentAzkarIndex ? 'active' : ''}`;
+                menuItem.setAttribute('data-index', index);
+                menuItem.textContent = `${index + 1}. ${truncateText(azkar.text, 30)}`;
+                menuItem.onclick = () => {
+                    goToAzkar(index);
+                };
+                menuList.appendChild(menuItem);
+            });
+        }
+
+        function filterAndRender(newMode = currentMode) {
+            currentMode = newMode;
+            filteredAzkar = allAzkarData.filter(a => a.type === currentMode);
+            currentAzkarIndex = 0;
+            completionScreen.style.display = 'none';
+            azkarCard.style.display = 'flex';
+            
+            morningBtn.classList.toggle('active', currentMode === 'صباح');
+            eveningBtn.classList.toggle('active', currentMode === 'مساء');
+
+            goToAzkar(0);
+        }
+
+        function switchMode(mode) {
+            if (mode !== currentMode) {
+                filterAndRender(mode);
+            }
+        }
+        
+        function handleCardClick() {
+            // Check if the card can be clicked (count > 0 and no transition is active)
+            if (currentCount > 0 && !isTransitioning) {
+                // 1. Decrement the counter
+                currentCount--;
+                
+                // 2. Add animation class for click feedback
+                azkarCard.classList.add('pop-on-click');
+                setTimeout(() => azkarCard.classList.remove('pop-on-click'), 300);
+
+                // 3. display (only the number is updated here)
+                updateCounterDisplay();
+
+                // 4. CHECK FOR COMPLETION AND ADVANCE 
+                if (currentCount === 0) {
+                    // Call the function that handles fading out the current card and moving to the next one
+                    checkAndAdvance(); 
+                }
+            }
+        }
+
+        function checkAndAdvance() {
+            // This function handles the logic for moving to the next card or completion screen
+            if (currentCount === 0) {
+                if (currentAzkarIndex < filteredAzkar.length - 1) {
+                    isTransitioning = true;
+                    azkarCard.classList.add('fade-out'); // Start fade out
+                    setTimeout(() => {
+                        goToAzkar(currentAzkarIndex + 1);
+                        isTransitioning = false;
+                        azkarCard.classList.remove('fade-out'); // Remove after transition
+                    }, 400);
+                } else {
+                    showCompletionScreen();
+                }
+            }
+        }
+
+        function showCompletionScreen() {
+            azkarCard.classList.add('fade-out');
+            setTimeout(() => {
+                azkarCard.style.display = 'none';
+                completionScreen.style.display = 'flex';
+                azkarCard.classList.remove('fade-out'); 
+            }, 300);
+        }
+
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            appLayout.classList.toggle('menu-open', isMenuOpen);
+        }
+
+        function truncateText(text, maxLength) {
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        // === Event Listeners ===
+        azkarCard.addEventListener('click', handleCardClick);
+        menuToggleBtn.addEventListener('click', toggleMenu);
+
+        azkarCard.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick();
+            }
+        });
+
+        // === Initialize ===
+        initTheme();
+        filterAndRender();
+        setTimeout(() => azkarCard.classList.add('card-active'), 50); // Initial fade in
+    </script>
+
+    <!-- === PWA Functionality === -->
+    <script>
+    // === PWA Functionality ===
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('ServiceWorker registration successful'))
+                .catch(error => console.log('ServiceWorker registration failed: ', error));
+        });
+    }
+
+    let deferredPrompt;
+    const installButton = document.getElementById('install-button');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installButton.style.display = 'block';
+    });
+
+    installButton.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') installButton.style.display = 'none';
+            deferredPrompt = null;
+        }
+    });
+
+    window.addEventListener('appinstalled', () => {
+        installButton.style.display = 'none';
+        deferredPrompt = null;
+        console.log('PWA was installed');
+    });
+    </script>
+</body>
+</html>
